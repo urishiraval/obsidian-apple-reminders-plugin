@@ -11,5 +11,5 @@ export default {
     exports: "default",
   },
   external: ["obsidian"],
-  plugins: [typescript(), nodeResolve({ browser: true }), commonjs()],
+  plugins: [typescript({ sourceMap: true }), nodeResolve({ browser: true }), commonjs()],
 };

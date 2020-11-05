@@ -1,0 +1,7 @@
+{
+    "id": "obsidian-apple-reminders",
+    "name": "Apple Reminders",
+    "description": "",
+    "isDesktopOnly": true,
+    "js": "main.js"
+}

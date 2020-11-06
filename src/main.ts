@@ -1,40 +1,38 @@
-import { Plugin, TFile } from "obsidian";
-import fs from "fs"
+import { addIcon, App, Plugin, PluginManifest, TFile } from "obsidian";
+import { MAIN_INTERFACE_CLASS, RibbonIcon } from "./constants";
 
-import AppleApi from "./AppleApi";
-import { List, Reminder, ListProxy } from "./interfaces";
+import AppleApi from "./api/AppleApi";
+import { List } from "./interfaces";
+import { mapReplacer, logger } from "./utils";
+import { StatusBar } from "./helpers";
 
-const MAIN_INTERFACE_CLASS = "reminders-app";
-const LIST_CLASS = "reminders-app-list";
+addIcon("reminders-app", RibbonIcon);
 
 export default class AppleRemindersPlugin extends Plugin {
 	apple = new AppleApi();
 	filePath = "Reminders.app.md";
 	file: TFile;
-
-	// reminders: ListProxy;
 	reminders: Map<string, List>;
+	ribbonIcon: HTMLElement;
+	statusBar = new StatusBar(this.addStatusBarItem());
 
+	constructor(app: App, manifest: PluginManifest) {
+		super(app, manifest);
+		this.ribbonIcon = this.addRibbonIcon("reminders-app", `Open ${this.filePath}`, () => {
+			try { this.app.vault.adapter.read(this.filePath) }
+			catch {
+				this.app.vault.adapter.write(this.filePath, "# Reminders.app");
+			}
+			if (this.file == null)
+				this.file = this.app.vault.getFiles().find(f => f.path === this.filePath)
 
-
-
-	ribbonIcon = this.addRibbonIcon("", "Reminders.app", () => {
-		try { this.app.vault.adapter.read(this.filePath) }
-		catch {
-			this.app.vault.adapter.write(this.filePath, "# Reminders.app");
-		}
-		if (this.file == null)
-			this.file = this.app.vault.getFiles().find(f => f.path === this.filePath)
-
-		this.app.workspace.openLinkText("Reminders.app.md", this.filePath);
-	})
-
-	statusBar = this.addStatusBarItem();
-
+			this.app.workspace.openLinkText("Reminders.app.md", this.filePath);
+		})
+	}
 
 	async onload() {
-		console.log("Apple Reminders Plugin is Loading...");
-		this.statusBar.setText("Apple Reminders Loading...");
+		logger("Apple Reminders Plugin is Loading...");
+		this.statusBar.message("Apple Reminders Loading...");
 
 		this.apple.getLists().then(res => {
 
@@ -42,28 +40,15 @@ export default class AppleRemindersPlugin extends Plugin {
 
 			this.reminders.forEach((value: List, key: string) => {
 
-				console.log(`Getting ${value.name}...`);
-				this.statusBar.setText(`Getting: ${value.name}`);
-				this.addStatusBarItem();
+				this.statusBar.message(`Getting ${value.name}...`);
 
 				this.apple.getActiveReminders(value.name).then(rems => {
 					let lst = this.reminders.get(key)
 					if (lst) {
 						this.reminders.set(key, { ...lst, reminders: rems })
-						console.log(this.reminders);
-
-						// lst.reminders = rems
-
-						console.log(`${value.name} Successfully Retrieved. Writing to ${this.filePath}`);
-						this.statusBar.setText(`${value.name} Successfully Retrieved. Writing to ${this.filePath}`);
-
-						this.statusBar.setText("Updateing Reminders.app...");
-						console.log("Updating Reminders.app");
-
-						this.app.vault.adapter.write(this.filePath, "```"+MAIN_INTERFACE_CLASS+"\n" + JSON.stringify(Array.from(this.reminders.entries()), mapReplacer, 2) + "\n```");
-
-						// const nodes = document.querySelectorAll<HTMLPreElement>('pre[class*="'+LIST_CLASS+'"]');
-						
+						this.statusBar.message(`${value.name} Successfully Retrieved. Writing to ${this.filePath}`);
+						this.app.vault.adapter.write(this.filePath, "```" + MAIN_INTERFACE_CLASS + "\n" + JSON.stringify(Array.from(this.reminders.entries()), mapReplacer, 2) + "\n```");
+						this.statusBar.message(`Done Updating ${value.name}.`)
 					}
 
 				})
@@ -72,17 +57,7 @@ export default class AppleRemindersPlugin extends Plugin {
 
 	}
 
-
-
 	onunload() {
-		console.log("Apple Reminders Plugin is Unloading...");
+		logger("Apple Reminders Plugin is Unloading...");
 	}
-}
-
-function mapReplacer(key: any, value: any) {
-	if (value instanceof Map) {
-		return Array.from(value.entries())
-		// of course you can separate cases to turn Maps into objects
-	}
-	return value
 }

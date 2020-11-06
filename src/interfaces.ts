@@ -14,4 +14,3 @@ export interface Reminder {
 export interface ListProxy {
     list: Map<string, List>,
 }
-

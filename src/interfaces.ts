@@ -14,3 +14,11 @@ export interface Reminder {
 export interface ListProxy {
     list: Map<string, List>,
 }
+
+export interface ReminderSettings {
+	centralFilePath:string
+}
+
+export interface CacheData {
+	settings: ReminderSettings,
+}

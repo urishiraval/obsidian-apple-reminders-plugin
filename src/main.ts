@@ -4,6 +4,7 @@ import fs from "fs"
 import AppleApi from "./AppleApi";
 import { List, Reminder, ListProxy } from "./interfaces";
 
+const MAIN_INTERFACE_CLASS = "reminders-app";
 const LIST_CLASS = "reminders-app-list";
 
 export default class AppleRemindersPlugin extends Plugin {
@@ -59,7 +60,7 @@ export default class AppleRemindersPlugin extends Plugin {
 						this.statusBar.setText("Updateing Reminders.app...");
 						console.log("Updating Reminders.app");
 
-						this.app.vault.adapter.write(this.filePath, "```"+LIST_CLASS+"\n" + JSON.stringify(Array.from(this.reminders.entries()), mapReplacer, 2) + "\n```");
+						this.app.vault.adapter.write(this.filePath, "```"+MAIN_INTERFACE_CLASS+"\n" + JSON.stringify(Array.from(this.reminders.entries()), mapReplacer, 2) + "\n```");
 
 						// const nodes = document.querySelectorAll<HTMLPreElement>('pre[class*="'+LIST_CLASS+'"]');
 						

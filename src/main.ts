@@ -1,5 +1,6 @@
-import { Plugin } from "obsidian";
+import { ItemView, Plugin, WorkspaceLeaf } from "obsidian";
 import runApplescript from "run-applescript";
+import fs from "fs";
 
 const DELIMITER = "|";
 const DELIMITER_2 = "#";
@@ -163,48 +164,69 @@ class RemindersInterface {
 
 export default class AppleRemindersPlugin extends Plugin {
 	apple = new RemindersInterface();
+	filePath = "./Reminders.app.md";
+	file:File = null;
 
 	reminders = new Proxy(new Map<string, List>(), {
-		get: (target, prop:string) => {
+		get: (target, prop: string) => {
 			return target.get(prop)
 		},
-		set: (obj, prop:string, value) => {
+		set: (obj, prop: string, value) => {
 			obj.set(prop, value);
 			return true;
 		}
 	});
+
+
+
+
+	ribbonIcon = this.addRibbonIcon("", "Reminders.app", () => {
+		console.log("clciked");
+		this.app.workspace.openLinkText("Reminders.app", "./Reminders.app.md").then(res => {
+			this.statusBar.setText("Opened Reminders.app")
+		});
+		
+	})
 
 	statusBar = this.addStatusBarItem();
 
 
 	async onload() {
 		console.log("Apple Reminders Plugin is Loading...");
-		this.statusBar.setText("Apple Reminders Loading...");
 
-		this.apple.getLists().then(res => {
-			this.reminders = res;
 
-			this.reminders.forEach((value: List, key: string) => {
+			this.statusBar.setText("Apple Reminders Loading...");
 
-				console.log(`Getting ${value.name}...`);
-				this.statusBar.setText(`Getting: ${value.name}`);
-				this.addStatusBarItem();
-				
-				this.apple.getActiveReminders(value.name).then(rems => {
-					let lst = this.reminders.get(key)
-					if (lst) {
-						lst.reminders = rems
-					}
-
-					console.log(`${value.name} Successfully Retrieved.`);
-					this.statusBar.setText(`${value.name} Successfully Retrieved.`);
-					
-
+			this.apple.getLists().then(res => {
+				this.reminders = res;
+	
+				this.reminders.forEach((value: List, key: string) => {
+	
+					console.log(`Getting ${value.name}...`);
+					this.statusBar.setText(`Getting: ${value.name}`);
+					this.addStatusBarItem();
+	
+					this.apple.getActiveReminders(value.name).then(rems => {
+						let lst = this.reminders.get(key)
+						if (lst) {
+							lst.reminders = rems
+						}
+	
+						console.log(`${value.name} Successfully Retrieved. Writing to ${this.filePath}`);
+						this.statusBar.setText(`${value.name} Successfully Retrieved. Writing to ${this.filePath}`);
+	
+						fs.writeFile(this.filePath, this.reminders.toString(), (err) => {
+							if(err)
+								this.statusBar.setText(err.toString());
+							else {
+								this.statusBar.setText("Updateing Reminders.app...")
+							}
+						})
+					})
 				})
+	
 			})
-
-		})
-
+		
 	}
 
 	onunload() {

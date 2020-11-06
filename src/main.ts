@@ -1,191 +1,31 @@
-import { ItemView, Plugin, WorkspaceLeaf } from "obsidian";
-import runApplescript from "run-applescript";
-import fs from "fs";
+import { Plugin, TFile } from "obsidian";
+import fs from "fs"
 
-const DELIMITER = "|";
-const DELIMITER_2 = "#";
+import AppleApi from "./AppleApi";
+import { List, Reminder, ListProxy } from "./interfaces";
 
-const scripts = {
-	"get_lists": () => `
-                      tell application "Reminders"
-                        set _ids to id of lists
-                        set names to name of lists
-                        set colrs to color of lists
-	                      return {_ids, "${DELIMITER}", names, "${DELIMITER}", colrs}
-                      end tell
-                    `,
-	"add_reminder": () => `
-					  `,
-	"get_active_reminders": (list: string) => `
-							tell application "Reminders"
-								set l to list "${list}"
-	
-								set reminder_names to (name of reminders in l whose completed is false)
-								set _ids to id of reminders in l whose completed is false
-								set reminder_dues to {}
-								set reminder_remind_mes to {}
-								
-								
-								set tmp to (due date of reminders in l whose completed is false)
-								set dues to {}
-								repeat with d in tmp
-									set end of dues to my findAndReplace(",", "", d as string)
-								end repeat
-								set end of reminder_dues to dues
-								
-								set tmp to (remind me date of reminders in l whose completed is false)
-								set rmmes to {}
-								repeat with d in tmp
-									set end of rmmes to my findAndReplace(",", "", d as string)
-								end repeat
-								set end of reminder_remind_mes to rmmes
-								
-								set rems to {_ids, "|", reminder_names, "|", reminder_dues, "|", reminder_remind_mes}
-								return rems
-							end tell
-
-
-
-							on findAndReplace(tofind, toreplace, TheString)
-								set ditd to text item delimiters
-								set text item delimiters to tofind
-								set textItems to text items of TheString
-								set text item delimiters to toreplace
-								set res to textItems as text
-								set text item delimiters to ditd
-								return res
-							end findAndReplace
-						`,
-	"get_all_active_reminders": () => `
-  					tell application "Reminders"
-  						set reminder_names to {}
-  						set reminder_dues to {}
-  						set reminder_remind_mes to {}
-  						set containers to {}
-  						repeat with l in lists
-	  						set end of containers to {name of l}
-	  						set nms to (name of reminders in l whose completed is false)
-	  						set end of nms to "#"
-	  						set end of reminder_names to nms
-	  
-	  						set tmp to (due date of reminders in l whose completed is false)
-	  						set dues to {}
-	  						repeat with d in tmp
-		  						set end of dues to my findAndReplace(",", "", d as string)
-	  						end repeat
-	  						set end of dues to "#"
-	  						set end of reminder_dues to dues
-	  
-	  						set tmp to (remind me date of reminders in l whose completed is false)
-	  						set rmmes to {}
-	  						repeat with d in tmp
-		  						set end of rmmes to my findAndReplace(",", "", d as string)
-	  						end repeat
-	  						set end of rmmes to "#"
-	  						set end of reminder_remind_mes to rmmes
-  						end repeat
-  						set rems to {containers, "|", reminder_names, "|", reminder_dues, "|", reminder_remind_mes}
-  						return rems
-					end tell
-
-					on findAndReplace(tofind, toreplace, TheString)
-  						set ditd to text item delimiters
-  						set text item delimiters to tofind
-  						set textItems to text items of TheString
-  						set text item delimiters to toreplace
-  						set res to textItems as text
-  						set text item delimiters to ditd
-  						return res
-					end findAndReplace
-                    `,
-	"remove_reminder": () => ``,
-	"alter_reminder": () => ``
-}
-
-interface List {
-	name: string
-	color: string
-	reminders: Map<string, Reminder> | null
-}
-
-interface Reminder {
-	id: string
-	name: string
-	due: string
-	remind_me: string
-}
-
-class RemindersInterface {
-	ScriptExecutor = runApplescript;
-
-	getLists() {
-		return new Promise<Map<string, List>>((resolve, reject) => {
-			this.ScriptExecutor(scripts["get_lists"]()).then(res => {
-				let raw_list: Array<string>;
-				raw_list = res.split(",");
-				raw_list.forEach((value, index) => {
-					raw_list[index] = value.trim();
-				})
-
-				let list = new Map<string, List>();
-				let seperator = raw_list.findIndex(value => DELIMITER == value)
-				for (let i = 0; i < seperator; ++i) {
-					list.set(raw_list[i], { name: raw_list[i + seperator + 1], color: raw_list[i + seperator * 2 + 2], reminders: null });
-				}
-
-				resolve(list)
-
-			}).catch((err) => reject(err))
-		})
-	}
-
-	getActiveReminders(list: string) {
-		return new Promise<Map<string, Reminder>>((resolve, reject) => {
-			this.ScriptExecutor(scripts["get_active_reminders"](list)).then(res => {
-				let raw_list: Array<string>;
-				raw_list = res.split(",")
-				raw_list.forEach((value, index) => {
-					raw_list[index] = value.trim();
-				})
-
-				let list = new Map<string, Reminder>();
-				let seperator = raw_list.findIndex(value => DELIMITER == value)
-				for (let i = 0; i < seperator; ++i) {
-					list.set(raw_list[i], { id: raw_list[i], name: raw_list[i + seperator + 1], due: raw_list[i + seperator * 2 + 2], remind_me: raw_list[i + seperator * 3 + 3] });
-				}
-
-				resolve(list)
-
-			}).catch((err) => reject(err))
-		})
-	}
-
-}
+const LIST_CLASS = "reminders-app-list";
 
 export default class AppleRemindersPlugin extends Plugin {
-	apple = new RemindersInterface();
-	filePath = "./Reminders.app.md";
-	file:File = null;
+	apple = new AppleApi();
+	filePath = "Reminders.app.md";
+	file: TFile;
 
-	reminders = new Proxy(new Map<string, List>(), {
-		get: (target, prop: string) => {
-			return target.get(prop)
-		},
-		set: (obj, prop: string, value) => {
-			obj.set(prop, value);
-			return true;
-		}
-	});
+	// reminders: ListProxy;
+	reminders: Map<string, List>;
 
 
 
 
 	ribbonIcon = this.addRibbonIcon("", "Reminders.app", () => {
-		console.log("clciked");
-		this.app.workspace.openLinkText("Reminders.app", "./Reminders.app.md").then(res => {
-			this.statusBar.setText("Opened Reminders.app")
-		});
-		
+		try { this.app.vault.adapter.read(this.filePath) }
+		catch {
+			this.app.vault.adapter.write(this.filePath, "# Reminders.app");
+		}
+		if (this.file == null)
+			this.file = this.app.vault.getFiles().find(f => f.path === this.filePath)
+
+		this.app.workspace.openLinkText("Reminders.app.md", this.filePath);
 	})
 
 	statusBar = this.addStatusBarItem();
@@ -193,43 +33,55 @@ export default class AppleRemindersPlugin extends Plugin {
 
 	async onload() {
 		console.log("Apple Reminders Plugin is Loading...");
+		this.statusBar.setText("Apple Reminders Loading...");
 
+		this.apple.getLists().then(res => {
 
-			this.statusBar.setText("Apple Reminders Loading...");
+			this.reminders = res;
 
-			this.apple.getLists().then(res => {
-				this.reminders = res;
-	
-				this.reminders.forEach((value: List, key: string) => {
-	
-					console.log(`Getting ${value.name}...`);
-					this.statusBar.setText(`Getting: ${value.name}`);
-					this.addStatusBarItem();
-	
-					this.apple.getActiveReminders(value.name).then(rems => {
-						let lst = this.reminders.get(key)
-						if (lst) {
-							lst.reminders = rems
-						}
-	
+			this.reminders.forEach((value: List, key: string) => {
+
+				console.log(`Getting ${value.name}...`);
+				this.statusBar.setText(`Getting: ${value.name}`);
+				this.addStatusBarItem();
+
+				this.apple.getActiveReminders(value.name).then(rems => {
+					let lst = this.reminders.get(key)
+					if (lst) {
+						this.reminders.set(key, { ...lst, reminders: rems })
+						console.log(this.reminders);
+
+						// lst.reminders = rems
+
 						console.log(`${value.name} Successfully Retrieved. Writing to ${this.filePath}`);
 						this.statusBar.setText(`${value.name} Successfully Retrieved. Writing to ${this.filePath}`);
-	
-						fs.writeFile(this.filePath, this.reminders.toString(), (err) => {
-							if(err)
-								this.statusBar.setText(err.toString());
-							else {
-								this.statusBar.setText("Updateing Reminders.app...")
-							}
-						})
-					})
+
+						this.statusBar.setText("Updateing Reminders.app...");
+						console.log("Updating Reminders.app");
+
+						this.app.vault.adapter.write(this.filePath, "```"+LIST_CLASS+"\n" + JSON.stringify(Array.from(this.reminders.entries()), mapReplacer, 2) + "\n```");
+
+						// const nodes = document.querySelectorAll<HTMLPreElement>('pre[class*="'+LIST_CLASS+'"]');
+						
+					}
+
 				})
-	
 			})
-		
+		})
+
 	}
+
+
 
 	onunload() {
 		console.log("Apple Reminders Plugin is Unloading...");
 	}
+}
+
+function mapReplacer(key: any, value: any) {
+	if (value instanceof Map) {
+		return Array.from(value.entries())
+		// of course you can separate cases to turn Maps into objects
+	}
+	return value
 }

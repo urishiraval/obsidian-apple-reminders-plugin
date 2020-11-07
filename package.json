@@ -18,6 +18,7 @@
         "@rollup/plugin-node-resolve": "^9.0.0",
         "@rollup/plugin-typescript": "^6.0.0",
         "@types/node": "^14.14.2",
+        "node-osascript": "^2.1.0",
         "obsidian": "https://github.com/obsidianmd/obsidian-api/tarball/master",
         "rollup": "^2.32.1",
         "rollup-plugin-svelte": "^6.1.0",

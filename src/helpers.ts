@@ -1,7 +1,7 @@
 import { Plugin } from "obsidian";
 
 import { CacheData } from "./interfaces";
-import { logger } from "./utils";
+import { logger } from "./tools";
 
 export class StatusBar {
     statusBar: HTMLElement;

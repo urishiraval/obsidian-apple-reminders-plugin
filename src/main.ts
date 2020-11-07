@@ -1,16 +1,14 @@
 import { addIcon, App, Plugin, PluginManifest, TFile } from "obsidian";
 
 import { MAIN_INTERFACE_CLASS, RibbonIcon } from "./constants";
-import AppleApi from "./api/AppleApi";
-import { ListItem, ReminderSettings, IInjection } from "./interfaces";
-import { mapReplacer, logger } from "./utils";
+import { ListItem, ReminderSettings, IInjection, QueryString } from "./interfaces";
+import { logger } from "./tools";
 import { Cache, StatusBar } from "./helpers";
 import List from "./ui/List.svelte";
 
 addIcon("reminders-app", RibbonIcon);
 
 export default class AppleRemindersPlugin extends Plugin {
-	apple = new AppleApi();
 	file: TFile;
 	reminders: Map<string, ListItem>;
 	ribbonIcon: HTMLElement;
@@ -36,7 +34,7 @@ export default class AppleRemindersPlugin extends Plugin {
 	}
 
 	async onload() {
-		logger("Apple Reminders Plugin is Loading...");
+		logger(this, "Apple Reminders Plugin is Loading...");
 		this.registerInterval(
 			window.setInterval(this.injectQueries.bind(this), 1000)
 		);
@@ -59,13 +57,14 @@ export default class AppleRemindersPlugin extends Plugin {
 
 					const { workspaceLeaf, component } = this.injections[removedIndex];
 
-					logger({
-						msg: "Removing mounted Svelte component",
-						context: {
+					logger(
+						this,
+						"Removing mounted Svelte component",
+						{
 							root: workspaceLeaf,
 							component: component,
-						},
-					});
+						}
+					);
 
 					this.injections.splice(removedIndex, 1);
 					component.$destroy();
@@ -83,30 +82,9 @@ export default class AppleRemindersPlugin extends Plugin {
 
 	refreshMainInterface() {
 		this.cache.load().then(cashe => {
-
-			this.statusBar.message("Cache loaded.")
-			this.statusBar.message("Apple Reminders Loading...");
-
-			this.apple.getLists().then(res => {
-
-				this.reminders = res;
-
-				this.reminders.forEach((value: ListItem, key: string) => {
-
-					this.statusBar.message(`Getting ${value.name}...`);
-
-					this.apple.getActiveReminders(value.name).then(rems => {
-						let lst = this.reminders.get(key)
-						if (lst) {
-							this.reminders.set(key, { ...lst, reminders: rems })
-							this.statusBar.message(`${value.name} Successfully Retrieved. Writing to ${cashe.settings.centralFilePath}`);
-							this.app.vault.adapter.write(cashe.settings.centralFilePath, "```" + MAIN_INTERFACE_CLASS + "\n" + JSON.stringify(Array.from(this.reminders.entries()), mapReplacer, 2) + "\n```");
-							this.statusBar.message(`Done Updating ${value.name}.`)
-						}
-
-					})
-				})
-			})
+			// this.statusBar.message("Cache loaded.")
+			// this.statusBar.message("Apple Reminders Loading...");
+			this.app.vault.adapter.write(cashe.settings.centralFilePath, `\`\`\`${MAIN_INTERFACE_CLASS}\nreminders-list:Errands;\n\`\`\``)
 		})
 	}
 
@@ -118,19 +96,21 @@ export default class AppleRemindersPlugin extends Plugin {
 		for (var i = 0; i < main_interface.length; i++) {
 			const node = main_interface[i];
 
-			logger({
-				msg: "Found Main Reminders.app block.",
-				context: node,
-			});
+			logger(
+				this,
+				"Found Main Reminders.app block.",
+				{ context: node }
+			);
 
 			const root = node.parentElement;
-			// const data = (node.innerText == "")? {}:JSON.parse(node.innerText);
+			const query:QueryString = {query: node.innerText};
 
 			root.removeChild(node);
 			let queryNode = new List({
 				target: root,
 				props: {
-					data: {}
+					root,
+					data: query
 				}
 			});
 
@@ -142,10 +122,11 @@ export default class AppleRemindersPlugin extends Plugin {
 				workspaceLeaf: workspaceLeaf,
 			};
 
-			logger({
-				msg: "Injected into Main Reminders.app Block.",
-				context: injection,
-			});
+			logger(
+				this,
+				"Injected into Main Reminders.app Block.",
+				{ context: injection }
+			);
 
 			this.injections.push(injection);
 		}
@@ -153,7 +134,7 @@ export default class AppleRemindersPlugin extends Plugin {
 
 
 	onunload() {
-		logger("Apple Reminders Plugin is Unloading...");
+		logger(this, "Apple Reminders Plugin is Unloading...");
 		this.observer.disconnect();
 		this.observer = null;
 

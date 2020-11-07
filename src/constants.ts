@@ -1,5 +1,4 @@
-export const MAIN_INTERFACE_CLASS = "reminders-app";
-export const LIST_CLASS = "reminders-app-list";
+export const MAIN_INTERFACE_CLASS = "black-apple";
 export const DELIMITER = "|";
 
 // <a href="https://iconscout.com/icons/apple-reminders" target="_blank">Apple Reminders Icon</a> on <a href="https://iconscout.com">Iconscout</a>

@@ -31,9 +31,15 @@ export class StatusBar {
 export class Cache {
     plugin: Plugin;
     data: CacheData;
+    private ready: boolean;
 
     constructor(plugin: Plugin) {
         this.plugin = plugin;
+        this.ready = false;
+    }
+
+    isReady() {
+        return ready;
     }
 
     load() {
@@ -45,11 +51,13 @@ export class Cache {
                             centralFilePath: "Reminders.app.md"
                         },
                     };
+                    this.ready = true;
                     resolve(this.data);
                     this.save();
                 }
                 else {
                     this.data = data;
+                    this.ready = true;
                     resolve(data)
                 };
             })

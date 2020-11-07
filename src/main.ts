@@ -22,6 +22,13 @@ export default class AppleRemindersPlugin extends Plugin {
 
 	constructor(app: App, manifest: PluginManifest) {
 		super(app, manifest);
+		this.ribbonIcon = this.addRibbonIcon("reminders-app", "Apple Reminders.app", () => {
+			if (this.cache.isReady()) {
+				let centralFilePath = this.cache.data.settings.centralFilePath;
+				this.app.workspace.openLinkText(centralFilePath, centralFilePath);
+
+			}
+		});
 		this.statusBar = new StatusBar(this.addStatusBarItem());
 		this.statusBar.message("Loading Settings...")
 		this.cache = new Cache(this);
@@ -69,7 +76,7 @@ export default class AppleRemindersPlugin extends Plugin {
 		const workspaceRoot = document.getElementsByClassName("workspace")[0];
 		this.observer.observe(workspaceRoot, { childList: true, subtree: true });
 
-
+		this.refreshMainInterface();
 
 
 	}

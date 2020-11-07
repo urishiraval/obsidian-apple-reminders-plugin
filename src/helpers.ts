@@ -63,3 +63,9 @@ export class Cache {
         return this.plugin.saveData(this.data);
     }
 }
+
+export class Translator {
+    jsonToMarkdown(json:Object) {
+        
+    }
+}

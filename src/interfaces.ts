@@ -1,10 +1,12 @@
-export interface List {
+import List from "./ui/List.svelte";
+
+export interface ListItem {
 	name: string
 	color: string
-	reminders: Map<string, Reminder> | null
+	reminders: Map<string, ReminderItem> | null
 }
 
-export interface Reminder {
+export interface ReminderItem {
 	id: string
 	name: string
 	due: string
@@ -12,13 +14,18 @@ export interface Reminder {
 }
 
 export interface ListProxy {
-    list: Map<string, List>,
+	list: Map<string, ListItem>,
 }
 
 export interface ReminderSettings {
-	centralFilePath:string
+	centralFilePath: string
 }
 
 export interface CacheData {
 	settings: ReminderSettings,
+}
+
+export interface IInjection {
+	component: List;
+	workspaceLeaf: Node;
 }

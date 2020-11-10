@@ -41,6 +41,7 @@ export interface AppleData {
 
 export interface AppleResource {
 	name:string
+	id?:string
 }
 
 export interface QueryString {

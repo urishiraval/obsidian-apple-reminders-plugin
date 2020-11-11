@@ -12,7 +12,7 @@ export class StatusBar {
     }
 
     message(msg: string, disapearIn?: number) {
-        logger(msg);
+        logger(this, msg);
         if (disapearIn) {
             this.statusBar.setText(msg)
             setTimeout(() => {
@@ -69,11 +69,5 @@ export class Cache {
 
     save() {
         return this.plugin.saveData(this.data);
-    }
-}
-
-export class Translator {
-    jsonToMarkdown(json:Object) {
-        
     }
 }

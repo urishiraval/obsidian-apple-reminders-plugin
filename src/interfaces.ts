@@ -1,28 +1,11 @@
+import { App } from 'obsidian';
 import List from "./ui/List.svelte";
 
-export interface ListItem {
-	name: string
-	color: string
-	reminders: Map<string, ReminderItem> | null
-}
-
-export interface ReminderItem {
-	id: string
-	name: string
-	due: string
-	remind_me: string
-}
-
-export interface ListProxy {
-	list: Map<string, ListItem>,
-}
-
-export interface ReminderSettings {
-	centralFilePath: string
+export interface PluginSettings {
 }
 
 export interface CacheData {
-	settings: ReminderSettings,
+	// settings: ReminderSettings,
 }
 
 export interface IInjection {
@@ -40,10 +23,33 @@ export interface AppleData {
 }
 
 export interface AppleResource {
-	name:string
-	id?:string
+	name: string
+	id?: string
 }
 
 export interface QueryString {
-	query:string
+	query: string
+}
+//--------------------------------
+export interface RemindersSettings {
+	list: string
+	"due date"?: any
+	"remind me date"?: any
+	[key: string]: any
+}
+
+export interface Reminder {
+	id?: string
+	name: string
+	completed: boolean | false
+	"due date"?: string
+	"remind me date"?: string
+	nodes: HTMLElement[]
+}
+
+export interface List {
+	id?: string
+	name: string
+	color?: string
+	nodes: HTMLElement[]
 }

@@ -16,9 +16,10 @@ This plugin uses apple script to sync so it will only work on an Apple Device.
 
 ### Manual
 
-1. Copy the `main.js` and `manifest.json` into the folder `.obsidian/plugins/obsidian-apple-reminders-plugin`
-2. Start Obsidian
-3. Enable `Apple Reminders` in `Third-Party Plugins`
+1. Download and unzip the release folder `obsidian-apple-reminders-plugin.zip`
+2. Copy the `obsidian-apple-reminders-plugin` folder into the `.obsidian/plugins` folder
+3. Start Obsidian
+4. Enable `Apple Reminders` in `Third-Party Plugins`
 
 ### Obsidian Built-In Plugin Manager
 

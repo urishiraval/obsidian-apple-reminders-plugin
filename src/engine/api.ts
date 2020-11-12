@@ -1,6 +1,5 @@
 import { logger } from "../tools";
 import { List, Reminder } from "../interfaces";
-import { reminders } from './scripts';
 import { AppleList, AppleReminder } from 'src/models/Reminders.app';
 
 class AppleApi {

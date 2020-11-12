@@ -33,8 +33,7 @@ export interface QueryString {
 //--------------------------------
 export interface RemindersSettings {
 	list: string
-	"due date"?: any
-	"remind me date"?: any
+	reminders: Reminder["name"][]
 	[key: string]: any
 }
 
@@ -44,12 +43,10 @@ export interface Reminder {
 	completed: boolean | false
 	"due date"?: string
 	"remind me date"?: string
-	nodes: HTMLElement[]
 }
 
 export interface List {
 	id?: string
 	name: string
 	color?: string
-	nodes: HTMLElement[]
 }

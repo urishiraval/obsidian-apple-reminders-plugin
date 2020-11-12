@@ -1,12 +1,41 @@
 <script lang="ts">
-import { log } from 'console';
+	import { log } from "console";
+	import { AppleList, AppleReminder } from "src/models/Reminders.app";
+	import ReminderHTML from "./Reminder.svelte";
 
-	import { AppleList } from "src/models/Reminders.app";
 	export let model: AppleList;
 
-	$: {
-		log({color: model.properties.color});
-	}
+	let reminders = model.getReminders();
+	
+	model.syncReminders().then((res) => {
+		console.log(res);
+		reminders = res;
+	});
+
+	const refresh = () => {
+		reminders = model.getReminders();
+	};
+
+	$: rems = reminders;
+
+	setInterval(() => {
+		refresh();
+	}, 1000);
 </script>
 
-<h2><span  style="color: {model.properties.color}">{model.getName()}</span></h2>
+<style>
+	/* .apple-list-add { } */
+</style>
+
+<hr />
+
+<h2>
+	<span style="color: {model.properties.color}">{model.properties.name}</span>
+</h2>
+
+{#each rems as reminder, i}
+	<ReminderHTML model={reminder} /><br />
+{/each}
+<br />
+<button class="apple-list-add">+</button>
+<hr />

@@ -2,9 +2,11 @@
 
 ![Reminders Plugin used with daily notes](/docs/RemindersPlugin.gif)
 
-A plugin to attempt to bring Apple Reminders into [Obsidian](https://obsidian.md).
+A plugin to attempt to bring Apple Reminders into [Obsidian](https://obsidian.md). 
 
 Note: This plugin can get a bit heavy but I've tried to make it as effecient as possible. Any recommendations are welcome.
+
+(I'm not responsible for any loss of data....though this plugin never deletes any reminder, only ever alters their properties)
 
 # Requirements
 

@@ -13,24 +13,8 @@ export interface IInjection {
 	workspaceLeaf: Node;
 }
 
-//The reason we need this is to ensure that only valid applescript is passed through to the Executor
-export interface AppleScript {
-	script: string
-}
-
-export interface AppleData {
-	data: object
-}
-
-export interface AppleResource {
-	name: string
-	id?: string
-}
-
-export interface QueryString {
-	query: string
-}
 //--------------------------------
+
 export interface RemindersSettings {
 	list: string
 	reminders: Reminder["name"][]

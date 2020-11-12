@@ -1,14 +1,13 @@
 import { addIcon, App, Plugin, PluginManifest, TFile } from "obsidian";
 import yaml from 'js-yaml';
 
-import { DELIMITER, MAIN_INTERFACE_CLASS, REMINDERS_CLASS, RibbonIcon, TASK_LIST_CLASS, TASK_LIST_ITEM_CLASS } from "./constants";
-import { List, Reminder, IInjection, QueryString, RemindersSettings, PluginSettings } from "./interfaces";
+import { REMINDERS_CLASS, RibbonIcon } from "./constants";
+import { IInjection, RemindersSettings, PluginSettings } from "./interfaces";
 import { logger } from "./tools";
 import { Cache, StatusBar } from "./helpers";
 import ListHTML from "./ui/List.svelte";
-import ReminderHTML from "./ui/Reminder.svelte";
-import api from "./engine/api";
 import { AppleList } from './models/Reminders.app';
+// import { MainInterface } from './models/MainInterface';
 
 
 addIcon("reminders-app", RibbonIcon);
@@ -21,18 +20,12 @@ export default class AppleRemindersPlugin extends Plugin {
 	cache: Cache;
 	private observer: MutationObserver;
 	private injections: IInjection[];
+	// private view: MainInterface;
 
 	lists = new Map<string, AppleList>();
 
 	constructor(app: App, manifest: PluginManifest) {
 		super(app, manifest);
-		this.ribbonIcon = this.addRibbonIcon("reminders-app", "Apple Reminders.app", () => {
-			// if (this.cache.isReady()) {
-			// 	let centralFilePath = this.cache.data.settings.centralFilePath;
-			// 	this.app.workspace.openLinkText(centralFilePath, centralFilePath);
-
-			// }
-		});
 		this.statusBar = new StatusBar(this.addStatusBarItem());
 		this.statusBar.message("Loading Settings...")
 		this.cache = new Cache(this);
@@ -80,22 +73,10 @@ export default class AppleRemindersPlugin extends Plugin {
 
 		const workspaceRoot = document.getElementsByClassName("workspace")[0];
 		this.observer.observe(workspaceRoot, { childList: true, subtree: true });
-
-		this.refreshMainInterface();
-
-
-	}
-
-	refreshMainInterface() {
-		// this.cache.load().then(cashe => {
-		// 	// this.statusBar.message("Cache loaded.")
-		// 	// this.statusBar.message("Apple Reminders Loading...");
-		// 	this.app.vault.adapter.write(cashe.settings.centralFilePath, `\`\`\`${MAIN_INTERFACE_CLASS}\nreminders-list:name=Errands;\n\`\`\``)
-		// })
 	}
 
 	async injectQueries() {
-		var settingsElement: HTMLElement, liElements: NodeListOf<HTMLElement>, settings: RemindersSettings;
+		var settings: RemindersSettings;
 
 
 		let settingsElements = document.querySelectorAll<HTMLPreElement>(`pre[class*="${REMINDERS_CLASS}"]`);
@@ -113,6 +94,7 @@ export default class AppleRemindersPlugin extends Plugin {
 				lst = await (new AppleList({ name: settings.list })).sync();
 				logger(this, "Created New List", lst);
 				this.lists.set(settings.list, lst);
+				// this.view.addList(lst);
 			}
 
 			if (settings.reminders) {
@@ -120,7 +102,6 @@ export default class AppleRemindersPlugin extends Plugin {
 					logger(this, "Custom Reminders", { name: elem, completed: false });
 					lst.addCustomReminder({ name: elem, completed: false });
 				});
-				lst.stale = true;
 			}
 
 			logger(
@@ -159,8 +140,6 @@ export default class AppleRemindersPlugin extends Plugin {
 			else {
 				logger(this, "UNDEFINED", node);
 			}
-
-
 		}
 	}
 
@@ -172,5 +151,7 @@ export default class AppleRemindersPlugin extends Plugin {
 
 		this.injections.forEach((injection) => injection.component.$destroy());
 		this.injections = [];
+
+		this.app.workspace.getLeavesOfType("apple-reminders-interface").forEach((leaf) => leaf.detach());
 	}
 }

@@ -6,37 +6,27 @@ import { logger } from 'src/tools';
 const scripts = {
     //Lists
     get_lists: () => `tell application "Reminders" to return properties of lists`,
-    get_list_properties: (list: AppleList, callback: Function) => applescript.execute(`tell application "Reminders"
-                                                                                            try
-                                                                                                return properties of list list_name
-                                                                                            on error
-                                                                                                set lis to make new list
-                                                                                                set name of lis to list_name
-                                                                                                return properties of lis
-                                                                                            end try
-                                                                                        end tell
-                                                                                    `, { list_name: list.properties.name }, callback),
-    get_list_reminders: (list: AppleList, callback: Function) => applescript.execute(`tell list list_name in application "Reminders" to return properties of reminders whose completed is false`, { list_name: list.properties.name }, callback),
+    get_list_reminders: (list: AppleList, callback: Function) => applescript.execute(`
+            tell list list_name in application "Reminders"
+            	set buffer to ((current date) - hours * 1)
+            	return properties of reminders whose completion date comes after buffer or completed is false	
+            end tell
+    `, { list_name: list.properties.name }, callback),
 
     //Reminders
-    get_reminder: (reminder: AppleReminder, callback: Function) => applescript.execute(`tell application "Reminders" to return properties of reminders whose name is reminder_name`, { reminder_name: reminder.name }, callback),
-    // get_all_reminders: () => `tell application "Reminders" to return properties of reminders`,
-    // get_all_active_reminders: () => `tell application "Reminders" to return properties of reminders whose completed is false`,
+    get_reminder: (reminder: AppleReminder, callback: Function) => applescript.execute(`tell application "Reminders" to return properties of reminders whose name is reminder_name`, { reminder_name: reminder.name }, callback)
+}
 
-    // add_reminder: (list: AppleList, reminder: AppleReminder) => `tell "${list.script}" of application "Reminders" to make new reminder with properties {${properties.script}}`,
-    // mark_reminder_completed: (list: AppleScript, name: AppleScript) => `tell list "${list.script}" of application "Reminders" to set completed of (reminders whose name is "${name.script}") to false`,
-    // remove_reminder: (list: AppleScript, name: AppleScript) => `tell list "${list.script}" of application "Reminders" to delete (every reminder whose name is "${name.script}")`,
+const executor = (script: string, variables: {}, callback: Function) => {
+    let childProcess = applescript.execute(script, variables, (err: any, res: any, raw: any) => {
+        if(err) throw err;
+        callback(res, raw);
+    });
 
-    // alter_reminder: (list: AppleList, reminder: AppleReminder) => `tell list "${list.getName()}" of application "Reminders" to set properties of (reminders whose name is "${reminder.getName()}") to ${reminder.getProperties()}`,
-
-    // //Bath Operations
-    // batch_add_reminders: (list: AppleScript, properties: AppleScript[]) => `
-    // tell "" of application "Reminders"
-    // 	${properties.map(props => {
-    // 	return `make new reminder with properties ${props.script}`;
-    // })}
-    // end tell
-    // `
+    setTimeout(() => {
+        childProcess.stdin.pause();
+        childProcess.kill();
+    }, 30000)
 }
 
 
@@ -44,45 +34,57 @@ export class AppleList {
     properties: List;
     reminders = new Map<Reminder["name"], AppleReminder>();
     className = "apple-list";
-    stale:boolean = true;
+    stale: boolean = true;
 
     constructor(properties: List) {
         this.properties = properties;
         setInterval(() => {
             this.syncReminders()
-        }, 30000);
+        }, 60000);
     }
 
     sync() {
         return new Promise<this>((resolve, reject) => {
             console.log('syncing');
 
-            scripts.get_list_properties(this, (err: any, res: List, raw: any) => {
-                logger(this, "Sync", { err, res, raw });
-                var temp = { ...this.properties, ...res }
-                this.properties = temp;
-                resolve(this);
-            })
+            executor(
+                `tell application "Reminders"
+                    try
+                        return properties of list list_name
+                    on error
+                        set lis to make new list
+                        set name of lis to list_name
+                        return properties of lis
+                    end try
+                end tell`,
+                { list_name: this.properties.name },
+                (res: List, raw: any) => {
+                    logger(this, "Sync", { res, raw });
+                    var temp = { ...this.properties, ...res }
+                    this.properties = temp;
+                    resolve(this);
+                });
         });
 
     }
 
     syncReminders() {
         return new Promise<AppleReminder[]>((resolve, reject) => {
-            scripts.get_list_reminders(this, (err: any, res: Reminder[], raw: any) => {
-                logger(this, "Reminders", {err, res, raw});
-                if (err) {
-                    throw err;
-                }
-                if(res && res.length > 0){
-                    res.forEach(element => {
-                        // logger(this, "Reminder", element);
-                        this.addReminder(element);
-                    });
-                }
-                
-                resolve(Array.from(this.reminders, ([name, val]) => val));
-            })
+            executor(
+                `tell list list_name in application "Reminders"
+            	    set buffer to ((current date) - hours * 1)
+            	    return properties of reminders whose completion date comes after buffer or completed is false	
+                end tell`,
+                { list_name: this.properties.name },
+                (res: Reminder[], raw: any) => {
+                    if (res && res.length > 0) {
+                        res.forEach(element => {
+                            // logger(this, "Reminder", element);
+                            this.addReminder(element);
+                        });
+                    }
+                    resolve(Array.from(this.reminders, ([name, val]) => val));
+                });
         });
     }
 
@@ -95,7 +97,12 @@ export class AppleList {
     }
 
     addReminder(reminder: Reminder) {
-        this.reminders.set(reminder.name, new AppleReminder(reminder, this));
+        let rem = this.reminders.get(reminder.name);
+        if (rem) {
+            rem.properties = reminder;
+        }
+        else
+            this.reminders.set(reminder.name, new AppleReminder(reminder, this));
     }
 
     addCustomReminder(properties: Reminder) {
@@ -111,7 +118,7 @@ export class AppleList {
                             end tell`,
             { list_name: this.properties.name, reminder_name: properties.name },
             (err: any, res: Reminder, raw: any) => {
-                if(err) throw err;
+                if (err) throw err;
                 logger(this, "Made Custom Reminder", { err, res, raw })
                 this.addReminder(res);
             }
@@ -154,10 +161,12 @@ export class AppleReminder {
         applescript.execute(`tell list list_name in application "Reminders"
                                 set rem to reminder reminder_name
                                 set completed in rem to true
+                                return properties of rem
                             end tell`,
             { list_name: this.container.properties.name, reminder_name: this.properties.name },
-            (err: any, res: any, raw: any) => {
+            (err: any, res: Reminder, raw: any) => {
                 logger(this, "Marked Done", { err, res, raw })
+                this.properties = { ...this.properties, ...res }
             }
         )
         // return await this.update({ name: this.properties.name, completed: true });
@@ -167,10 +176,12 @@ export class AppleReminder {
         applescript.execute(`tell list list_name in application "Reminders"
                                 set rem to reminder reminder_name
                                 set completed in rem to false
+                                return properties of rem
                             end tell`,
             { list_name: this.container.properties.name, reminder_name: this.properties.name },
-            (err: any, res: any, raw: any) => {
+            (err: any, res: Reminder, raw: any) => {
                 logger(this, "Marked Not Done", { err, res, raw })
+                this.properties = { ...this.properties, ...res }
             }
         )
     }

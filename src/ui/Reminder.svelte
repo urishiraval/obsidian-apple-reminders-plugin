@@ -3,7 +3,10 @@
 
     export let model: AppleReminder;
 
-	$: checked = model.properties.completed;
+    $: m = model.properties;
+    
+    setInterval(() => {m = model.properties}, 1000)
+
 </script>
 
 <style>
@@ -30,11 +33,11 @@
 
 <input
     type="checkbox"
-    class="apple-reminder-completed checkbox-round"
+    class="checkbox-round"
     on:change={(event) => {
         if (event.target.checked) model.markDone();
         else model.markNotDone();
     }} 
-    checked={checked}
+    checked={m.completed}
     />
-<span class="apple-reminder-name">{model.properties.name}</span>
+<span class="apple-reminder-name">{m.name}</span>

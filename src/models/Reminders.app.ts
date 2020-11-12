@@ -8,7 +8,7 @@ const scripts = {
     get_lists: () => `tell application "Reminders" to return properties of lists`,
     get_list_reminders: (list: AppleList, callback: Function) => applescript.execute(`
             tell list list_name in application "Reminders"
-            	set buffer to ((current date) - hours * 1)
+            	set buffer to ((current date) - minutes * 5)
             	return properties of reminders whose completion date comes after buffer or completed is false	
             end tell
     `, { list_name: list.properties.name }, callback),

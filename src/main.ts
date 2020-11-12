@@ -27,7 +27,7 @@ export default class AppleRemindersPlugin extends Plugin {
 	constructor(app: App, manifest: PluginManifest) {
 		super(app, manifest);
 		this.statusBar = new StatusBar(this.addStatusBarItem());
-		this.statusBar.message("Loading Settings...")
+		this.statusBar.message("Apple Reminders Sync Enabled")
 		this.cache = new Cache(this);
 		this.injections = [];
 	}
@@ -109,6 +109,8 @@ export default class AppleRemindersPlugin extends Plugin {
 				"Found Main Reminders.app block.",
 				{ context: node }
 			);
+
+			this.statusBar.message("Found Reminders Block", 10000);
 
 			const root = node.parentElement;
 			if (root) {

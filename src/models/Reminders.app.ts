@@ -38,6 +38,7 @@ export class AppleList {
 
     constructor(properties: List) {
         this.properties = properties;
+        this.syncReminders();
         setInterval(() => {
             this.syncReminders()
         }, 60000);

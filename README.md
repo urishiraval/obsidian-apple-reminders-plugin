@@ -64,6 +64,8 @@ The blocks sync every minute. The sync time is fixed at the moment but a Setting
 
 # Objectives
 
+To add to this list create a Feature Request in Issues and I'll be happy to add it to this list.
+
 (In no particular order)
 
 - [x] Fetch data from Reminders.app for use in Obsidian

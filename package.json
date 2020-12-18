@@ -30,6 +30,7 @@
     },
     "dependencies": {
         "@types/js-yaml": "^3.12.5",
+        "chrono-node": "^2.1.10",
         "js-yaml": "^3.14.0",
         "run-applescript": "^4.0.0"
     }

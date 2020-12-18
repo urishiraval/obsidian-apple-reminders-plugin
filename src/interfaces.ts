@@ -27,6 +27,8 @@ export interface Reminder {
 	completed: boolean | false
 	"due date"?: string
 	"remind me date"?: string
+	priority?: number
+	body?: string
 }
 
 export interface List {

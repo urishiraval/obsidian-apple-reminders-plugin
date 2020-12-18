@@ -78,9 +78,13 @@ export default class AppleRemindersPlugin extends Plugin {
 	async injectQueries() {
 		var settings: RemindersSettings;
 
+		let filename = document.querySelector<HTMLElement>(`div[class*="header-title"]`).innerText;
 
 		let settingsElements = document.querySelectorAll<HTMLPreElement>(`pre[class*="${REMINDERS_CLASS}"]`);
 		for (let i = 0; i < settingsElements.length; ++i) {
+
+			logger(this, "FILE NAME", filename);
+
 			let node = settingsElements[i];
 
 			settings = yaml.load(node.innerText);
@@ -119,7 +123,9 @@ export default class AppleRemindersPlugin extends Plugin {
 				let queryNode = new ListHTML({
 					target: root,
 					props: {
-						model: lst
+						model: lst,
+						filters: settings.filters,
+						filename
 					}
 				});
 

@@ -1,6 +1,7 @@
 <script lang="ts">
     import { AppleReminder } from "src/models/Reminders.app";
     import moment from "moment";
+import { APPLE_DATE_FORMAT } from "src/constants";
 
     export let model: AppleReminder;
 
@@ -71,7 +72,7 @@
         {/if}
         {#if m['due date'] != 'missing value'}
             <br /><small
-                class="apple-reminder-due-date">{moment(m['due date'], 'dddd, DD MMMM at H:m:ss').format('\t YYYY/MM/DD, hh:mm a (Z)')}</small>
+                class="apple-reminder-due-date">{moment(m['due date'], APPLE_DATE_FORMAT).format('\t YYYY/MM/DD, hh:mm a (Z)')}</small>
         {/if}
     </span>
 </span>

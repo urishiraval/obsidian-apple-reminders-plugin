@@ -14,10 +14,16 @@ export interface IInjection {
 }
 
 //--------------------------------
+export interface Filter {
+	date?: string
+	priority?: "high"|"medium"|"low"
+	"name matches"?: string
+}
 
 export interface RemindersSettings {
 	list: string
 	reminders: Reminder["name"][]
+	filters: Filter[]
 	[key: string]: any
 }
 

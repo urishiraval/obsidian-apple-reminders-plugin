@@ -1,7 +1,7 @@
 {
     "name": "obsidian-apple-reminders",
     "author": "Rishi Raval <rijinrava@gmail.com",
-    "version": "0.0.1",
+    "version": "0.2.0",
     "description": "",
     "main": "main.js",
     "scripts": {

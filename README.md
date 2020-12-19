@@ -51,7 +51,7 @@ Note:
   
 ## Additional Features
 
-##### Pull Specific Reminders
+#### Pull Specific Reminders
 
 ```yaml
 list: List Name
@@ -65,7 +65,7 @@ This will do 2 things:
  2. If 'Reminder 1' or 'Reminder 2' does exist, it will fetch it and show it's status. 
   - (I.e. it fetches the reminders regardless of whether they are completed, effectively bypassing the default settings of a list only fetching reminders that aren't completed yet.)
 
-##### Filters
+#### Filters
 
 ```yaml
 list: List Name

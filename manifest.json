@@ -3,5 +3,9 @@
     "name": "Apple Reminders",
     "description": "",
     "isDesktopOnly": true,
-    "js": "main.js"
+    "js": "main.js",
+	"version": "0.2.0",
+	"minAppVersion": "0.9.22",
+	"author": "urishiraval",
+	"authorUrl": "https://urishiraval.github.io"
 }

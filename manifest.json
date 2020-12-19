@@ -1,11 +1,11 @@
 {
-    "id": "obsidian-apple-reminders-plugin",
-    "name": "Apple Reminders",
-    "description": "",
-    "isDesktopOnly": true,
-    "js": "main.js",
+    	"id": "obsidian-apple-reminders-plugin",
+    	"name": "Apple Reminders",
+    	"description": "",
+    	"isDesktopOnly": true,
+    	"js": "main.js",
 	"version": "0.2.0",
-	"minAppVersion": "0.9.22",
+	"minAppVersion": "0.9.10",
 	"author": "urishiraval",
 	"authorUrl": "https://urishiraval.github.io"
 }

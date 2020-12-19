@@ -22,6 +22,8 @@
 	function match(reminder: AppleReminder) {
 		var match = true;
 
+		if (filters == null) return true;
+
 		filters.forEach((filter) => {
 			logger(this, "FILTER", { filter, reminder });
 			if (filter != null) {

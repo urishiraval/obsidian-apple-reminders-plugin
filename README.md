@@ -10,6 +10,12 @@ Note: This plugin can get a bit heavy but I've tried to make it as effecient as 
 
 ##### Change Log
 
+v2.0:
+- !! Massive overhaul of entire codebase
+- Added better refreshing
+- Added Settings
+- Fixed bugs that blocked reminder access in later MacOS versions
+
 v0.2:
 - Implemented basic Filtering
 - Displayed more Data
@@ -30,8 +36,7 @@ This plugin uses apple script to sync so it will only work on an Apple Device.
 
 ### Obsidian Built-In Plugin Manager
 
-> Comming Soon...
-
+Add this plugin from the Community Plugins Tab
 # How To Use
 
 Create a code block like so:
@@ -92,7 +97,7 @@ The filter will be replaced by the Title of the Note. This has a caveat that if 
 
 # Additional Notes
 
-The blocks sync every minute. The sync time is fixed at the moment but a Settings View is in the works (see Objectives below).
+The blocks sync every few minute. The sync time can be set in the plugin settings.
 
 # Objectives
 
@@ -116,9 +121,9 @@ To add to this list create a Feature Request in Issues and I'll be happy to add 
       - This doesn't seem nessesary at the moment. However the status may change if enough people want the more fine grained control :)
     - [x] Filter by Priority
     - [ ] Filter by Location
-  - [ ] Create Status Bar icon and messages to show when the plugin is doing whatever it's doing.
+  - [x] Create Status Bar icon and messages to show when the plugin is doing whatever it's doing.
   - [ ] Create an Interface that shows all the Lists in Obsidian at once
-  - [ ] Create a 'Today' List (?? Is this redundant now that Filters are implemented?) 
+  - [ ] ~~Create a 'Today' List (?? Is this redundant now that Filters are implemented?)~~
   
 - [ ] Create a mechanism that allows for efficient editing of Reminders via Obsidian
   - [x] Create Reminders through Obsidian
@@ -128,16 +133,17 @@ To add to this list create a Feature Request in Issues and I'll be happy to add 
   - [ ] Look into bringing the List 'emblems' into Obsidian
   
 - [ ] Make this plugin as configurable as possible to allow for multiple use cases
-  - [ ] Create a settings tab in the Obsidian Menu
-  - [ ] Make sync time configurable
+  - [x] Create a settings tab in the Obsidian Menu
+  - [x] Make sync time configurable
   - [ ] Make UI more configurable (standardize class names and create a document for it)
-  - [ ] Make sensible defaults
+  - [x] Make sensible defaults
     
 - [ ] Development Things
-  - [ ] Create Documentation
-  - [ ] Create Files for AppleScripts to allow for customization
+  - [x] Create Documentation
+  - [ ] ~~Create Files for AppleScripts to allow for customization~~
 
 # Feedback
 
 Any bugs or features/recommendations can be made by creating an Issue on this repo
+
 

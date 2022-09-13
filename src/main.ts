@@ -1,165 +1,108 @@
-import { addIcon, App, Plugin, PluginManifest, TFile } from "obsidian";
-import yaml from 'js-yaml';
-
-import { REMINDERS_CLASS, RibbonIcon } from "./constants";
-import { IInjection, RemindersSettings, PluginSettings } from "./interfaces";
-import { logger } from "./tools";
-import { Cache, StatusBar } from "./helpers";
-import ListHTML from "./ui/List.svelte";
-import { AppleList } from './models/Reminders.app';
-// import { MainInterface } from './models/MainInterface';
+import { Notice, Plugin } from 'obsidian';
+import { ListElement } from './ui/list.element';
+import { RemindersDataService } from "./data/reminders-data.service";
+import { parse } from 'yaml';
+import { interval, Subscription } from 'rxjs';
+import { AppleRemindersPluginSettings, SampleSettingTab, DEFAULT_SETTINGS } from './ui/settings';
+import { AppleReminderSpec } from './models/shared.models';
 
 
-addIcon("reminders-app", RibbonIcon);
 
 export default class AppleRemindersPlugin extends Plugin {
-	file: TFile;
-	ribbonIcon: HTMLElement;
-	statusBar: StatusBar;
-	settings: PluginSettings;
-	cache: Cache;
-	private observer: MutationObserver;
-	private injections: IInjection[];
-	// private view: MainInterface;
+	settings: AppleRemindersPluginSettings;
 
-	lists = new Map<string, AppleList>();
+	elementRegister: { [key: string]: { list: ListElement; sub: Subscription; spec: AppleReminderSpec } } = {};
 
-	constructor(app: App, manifest: PluginManifest) {
-		super(app, manifest);
-		this.statusBar = new StatusBar(this.addStatusBarItem());
-		this.statusBar.message("Apple Reminders Sync Enabled")
-		this.cache = new Cache(this);
-		this.injections = [];
+	statusBar: HTMLElement;
+
+	message(msg: string, disappearIn?: number) {
+		if (disappearIn) {
+			this.statusBar.setText(msg)
+			setTimeout(() => {
+				this.statusBar.setText("🍎")
+			}, disappearIn);
+		}
+		else
+			this.statusBar.setText(msg)
 	}
+
 
 	async onload() {
-		logger(this, "Apple Reminders Plugin is Loading...");
-		this.registerInterval(
-			window.setInterval(this.injectQueries.bind(this), 1000)
-		);
+		await this.loadSettings();
 
-		// We need to manually call destroy on the injected Svelte components when they are removed.
-		this.observer = new MutationObserver((mutations, observer) => {
-			if (this.injections.length == 0) {
+		// TODO: Create Reminders view on side panel when clicking ribbon icon
+		// const ribbonIconEl = this.addRibbonIcon('dice', 'Sample Plugin', (evt: MouseEvent) => {
+		// Called when the user clicks the icon.
+		// new Notice('This is a notice!');
+		// });
+
+		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
+		this.statusBar = this.addStatusBarItem();
+		this.statusBar.setText('Loading Apple Reminders...');
+
+		this.addSettingTab(new SampleSettingTab(this.app, this));
+
+		RemindersDataService.setLogger((x, timeout?: number) => this.message(x, timeout))
+		RemindersDataService.setSettings(this.settings);
+
+		this.registerMarkdownCodeBlockProcessor('apple-reminders', (src, el, ctx) => {
+			const spec = parse(src.trim());
+			if (!spec["list"]) {
+				new Notice("You cannot have an apple-reminders block without a list name!", 3000);
+				el.innerHTML = `
+					<pre>Please add list name to continue</pre>
+				`;
 				return;
 			}
+			let lE = new ListElement(spec);
+			let fileName = ctx.sourcePath.split("\\").last()?.split("/").last()?.trim().split(".").first();
+			lE.fileName = fileName;
 
-			mutations.forEach((mutation) => {
-				mutation.removedNodes.forEach((removed) => {
-					const removedIndex = this.injections.findIndex(
-						(ele) => ele.workspaceLeaf == removed
-					);
+			let x = interval(RemindersDataService.getSettings().autoRefreshTime * 10000).subscribe(() => {
+				RemindersDataService.fetchData(spec, fileName).then(
+					([listData, reminders, customReminders]) => {
+						lE.reminders = reminders;
+						lE.listMeta = listData;
+						lE.customReminders = customReminders;
+						// console.log({ listData, reminders, customReminders });
 
-					if (removedIndex == -1) {
-						return;
 					}
-
-					const { workspaceLeaf, component } = this.injections[removedIndex];
-
-					logger(
-						this,
-						"Removing mounted Svelte component",
-						{
-							root: workspaceLeaf,
-							component: component,
-						}
-					);
-
-					this.injections.splice(removedIndex, 1);
-					component.$destroy();
-				});
+				)
 			});
-		});
 
-		const workspaceRoot = document.getElementsByClassName("workspace")[0];
-		this.observer.observe(workspaceRoot, { childList: true, subtree: true });
+			this.elementRegister[src.trim()] = {
+				list: lE,
+				spec: spec,
+				sub: x
+			}
+
+			RemindersDataService.fetchData(spec, fileName).then(
+				([listData, reminders, customReminders]) => {
+					lE.reminders = reminders;
+					lE.listMeta = listData;
+					lE.customReminders = customReminders;
+					// console.log({ listData, reminders, customReminders });
+
+				}
+			)
+
+			el.appendChild(lE);
+		})
 	}
-
-	async injectQueries() {
-		var settings: RemindersSettings;
-
-		let filename = document.querySelector<HTMLElement>(`div[class*="header-title"]`).innerText;
-
-		let settingsElements = document.querySelectorAll<HTMLPreElement>(`pre[class*="${REMINDERS_CLASS}"]`);
-		for (let i = 0; i < settingsElements.length; ++i) {
-
-			logger(this, "FILE NAME", filename);
-
-			let node = settingsElements[i];
-
-			settings = yaml.load(node.innerText);
-
-			logger(this, "Settings", settings);
-
-			if (!settings.list) throw ("No List Specified!");
-
-			let lst = this.lists.get(settings.list);
-			if (!lst) {
-				lst = await (new AppleList({ name: settings.list })).sync();
-				logger(this, "Created New List", lst);
-				this.lists.set(settings.list, lst);
-				// this.view.addList(lst);
-			}
-
-			if (settings.reminders) {
-				settings.reminders.forEach(elem => {
-					logger(this, "Custom Reminders", { name: elem, completed: false });
-					lst.addCustomReminder({ name: elem, completed: false });
-				});
-			}
-
-			logger(
-				this,
-				"Found Main Reminders.app block.",
-				{ context: node }
-			);
-
-			this.statusBar.message("Found Reminders Block", 10000);
-
-			const root = node.parentElement;
-			if (root) {
-				root.removeChild(node);
-
-				let queryNode = new ListHTML({
-					target: root,
-					props: {
-						model: lst,
-						filters: settings.filters,
-						filename
-					}
-				});
-
-				const workspaceLeaf = root.closest(".workspace-leaf");
-				workspaceLeaf.classList.add("contains-reminder-list");
-
-				const injection = {
-					component: queryNode,
-					workspaceLeaf: workspaceLeaf,
-				};
-
-				logger(
-					this,
-					"Injected into Main Reminders.app Block.",
-					{ context: injection }
-				);
-
-				this.injections.push(injection);
-			}
-			else {
-				logger(this, "UNDEFINED", node);
-			}
-		}
-	}
-
 
 	onunload() {
-		logger(this, "Apple Reminders Plugin is Unloading...");
-		this.observer.disconnect();
-		this.observer = null;
+		Object.keys(this.elementRegister).forEach(key => {
+			this.elementRegister[key].sub.unsubscribe();
+		})
+	}
 
-		this.injections.forEach((injection) => injection.component.$destroy());
-		this.injections = [];
+	async loadSettings() {
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+	}
 
-		this.app.workspace.getLeavesOfType("apple-reminders-interface").forEach((leaf) => leaf.detach());
+	async saveSettings() {
+		await this.saveData(this.settings);
 	}
 }
+
+

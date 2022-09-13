@@ -1,19 +1,17 @@
-import { Plugin } from 'obsidian';
+import { Notice, Plugin } from 'obsidian';
 import { ListElement } from './ui/list.element';
-import { RemindersDataService } from "./reminders-data.service";
+import { RemindersDataService } from "./data/reminders-data.service";
 import { parse } from 'yaml';
-import { BehaviorSubject, interval, Subscription } from 'rxjs';
+import { interval, Subscription } from 'rxjs';
+import { AppleRemindersPluginSettings, SampleSettingTab, DEFAULT_SETTINGS } from './ui/settings';
 import { AppleReminderSpec } from './models/shared.models';
-import { AppleRemindersPluginSettings, SampleSettingTab, DEFAULT_SETTINGS } from './settings';
-import { threadId } from 'worker_threads';
 
 
 
 export default class AppleRemindersPlugin extends Plugin {
 	settings: AppleRemindersPluginSettings;
 
-	blocks: BehaviorSubject<AppleReminderSpec>[] = [];
-	subs: Subscription[] = [];
+	elementRegister: { [key: string]: { list: ListElement; sub: Subscription; spec: AppleReminderSpec } } = {};
 
 	statusBar: HTMLElement;
 
@@ -42,41 +40,51 @@ export default class AppleRemindersPlugin extends Plugin {
 		this.statusBar = this.addStatusBarItem();
 		this.statusBar.setText('Loading Apple Reminders...');
 
-		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new SampleSettingTab(this.app, this));
-
-		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
-		// Using this function will automatically remove the event listener when this plugin is disabled.
-
-		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
 
 		RemindersDataService.setLogger((x, timeout?: number) => this.message(x, timeout))
 		RemindersDataService.setSettings(this.settings);
 
 		this.registerMarkdownCodeBlockProcessor('apple-reminders', (src, el, ctx) => {
-			const spec = parse(src);
+			const spec = parse(src.trim());
+			if(!spec["list"]) {
+				new Notice("You cannot have an apple-reminders block without a list name!", 3000);
+				el.innerHTML = `
+					<pre>Please add list name to continue</pre>
+				`;
+				return;
+			}
 			let lE = new ListElement(spec);
+			let fileName = ctx.sourcePath.split("\\").last()?.split("/").last()?.trim().split(".").first();
 
-			RemindersDataService.fetchData(spec).then(([listData, reminders]) => {
-				lE.listMeta =  listData;
+			let x = interval(RemindersDataService.getSettings().autoRefreshTime * 10000).subscribe(() => {
+				RemindersDataService.fetchData(spec, fileName).then(
+					([listData, reminders]) => {
+						lE.reminders = reminders;
+						lE.listMeta = listData;
+					}
+				)
+			});
+
+			this.elementRegister[src.trim()] = {
+				list: lE,
+				spec: spec,
+				sub: x
+			}
+
+			RemindersDataService.fetchData(spec, fileName).then(([listData, reminders]) => {
+				lE.listMeta = listData;
 				lE.reminders = reminders;
 			})
 
-			let x = interval(RemindersDataService.getSettings().autoRefreshTime * 1000).subscribe(() => { RemindersDataService.fetchData(spec).then(
-				([listData, reminders]) => {
-					lE.reminders = reminders;
-					lE.listMeta = listData;
-				}
-			) });
-
-			this.subs.push(x);
 			el.appendChild(lE);
 		})
 	}
 
 	onunload() {
-		this.subs.forEach(s => s.unsubscribe());
-
+		Object.keys(this.elementRegister).forEach(key => {
+			this.elementRegister[key].sub.unsubscribe();
+		})
 	}
 
 	async loadSettings() {

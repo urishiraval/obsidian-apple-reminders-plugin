@@ -1,5 +1,5 @@
 import { PluginSettingTab, App, Setting } from "obsidian";
-import AppleRemindersPlugin from "./main";
+import AppleRemindersPlugin from "../main";
 
 export interface AppleRemindersPluginSettings {
 	autoRefreshTime: number;
@@ -32,7 +32,6 @@ export class SampleSettingTab extends PluginSettingTab {
 				.setLimits(60, 600, 10)
 				.setValue(this.plugin.settings.autoRefreshTime)
 				.onChange(async (value) => {
-					console.log('Secret: ' + value);
 					this.plugin.settings.autoRefreshTime = value;
 					await this.plugin.saveSettings();
 				}));

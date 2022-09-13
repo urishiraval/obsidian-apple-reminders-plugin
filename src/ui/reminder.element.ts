@@ -1,9 +1,9 @@
 import { LitElement, html, css, CSSResultGroup } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
-import * as moment from 'moment';
-import { APPLE_DATE_FORMAT } from 'src/contants';
+import { moment } from 'obsidian';
+import { APPLE_DATE_FORMAT } from 'src/data/constants';
 import { ReminderModel } from 'src/models/shared.models';
-import { RemindersDataService } from 'src/reminders-data.service';
+import { RemindersDataService } from 'src/data/reminders-data.service';
 
 @customElement('apple-reminder-element')
 export class ReminderElement extends LitElement {
@@ -80,7 +80,7 @@ export class ReminderElement extends LitElement {
 					${(this.model.priority && this.model.priority > 0) ?
 				html`
 							<span class="apple-reminder-priority">
-								${Array(Math.ceil((10 - this.model.priority) / 3)).reduce((prev, curr) => prev + "!", "")}
+								${Array.from(Array(Math.ceil((10 - this.model.priority) / 3)).keys()).reduce((prev, curr) => prev + '!', "")}
 							</span>
 						`: ""
 			}

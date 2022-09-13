@@ -27,6 +27,7 @@
 	},
 	"dependencies": {
 		"@webcomponents/template": "^1.5.0",
+		"chrono-node": "^2.4.1",
 		"lit": "^2.3.1",
 		"node-osascript": "^2.1.0",
 		"rxjs": "^7.5.6",

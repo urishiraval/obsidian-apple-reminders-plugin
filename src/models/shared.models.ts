@@ -1,5 +1,3 @@
-import { Moment } from 'moment';
-
 export interface ReminderModel {
 	id: string
 	name: string
@@ -25,5 +23,5 @@ export interface FilterModel {
 export interface AppleReminderSpec {
 	list: ListModel["name"];
 	reminders: ReminderModel["name"][];
-	filters: FilterModel;
+	filters?: FilterModel[];
 }

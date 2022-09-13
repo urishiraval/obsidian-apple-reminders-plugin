@@ -50,9 +50,9 @@ export const RemindersDataService = (function () {
         }
         return <ReminderModel[]>x;
     };
-    const getOrCreateReminder = async (list_name: ListModel["name"], reminder_name: ReminderModel["name"]) => {
+    const getOrCreateReminder = async (list_name: ListModel["name"], reminder_name: ReminderModel["name"]): Promise<ReminderModel> => {
         logger("Looking for " + reminder_name + " in " + list_name + " before attempting to create")
-        return await executor(`tell list list_name in application "Reminders"
+        let ret = <ReminderModel> await executor(`tell list list_name in application "Reminders"
                                     try
                                         return properties of reminder reminder_name
                                     on error
@@ -62,6 +62,7 @@ export const RemindersDataService = (function () {
                                     end try
                                 end tell`,
             { list_name, reminder_name });
+        return ret;
     };
     const refreshReminder = (reminderId: ReminderModel["id"]) => { };
     const toggleReminderDoneStatus = async (list_name: ListModel["name"], reminder_name: ReminderModel["name"]): Promise<ReminderModel> => {
@@ -97,9 +98,13 @@ export const RemindersDataService = (function () {
         },
 
         fetchData: (spec: AppleReminderSpec, fileName: string | null = null) => {
+            let customReminders = spec.reminders? spec.reminders: [];
+            // console.log({customReminders});
+            
             return Promise.all([
                 getList(spec.list),
-                getReminders(spec["list"], spec["filters"])
+                getReminders(spec["list"], spec["filters"]),
+                Promise.all(customReminders.map(rem => getOrCreateReminder(spec.list, rem)))
             ])
         },
 

@@ -47,7 +47,7 @@ export default class AppleRemindersPlugin extends Plugin {
 
 		this.registerMarkdownCodeBlockProcessor('apple-reminders', (src, el, ctx) => {
 			const spec = parse(src.trim());
-			if(!spec["list"]) {
+			if (!spec["list"]) {
 				new Notice("You cannot have an apple-reminders block without a list name!", 3000);
 				el.innerHTML = `
 					<pre>Please add list name to continue</pre>
@@ -56,12 +56,16 @@ export default class AppleRemindersPlugin extends Plugin {
 			}
 			let lE = new ListElement(spec);
 			let fileName = ctx.sourcePath.split("\\").last()?.split("/").last()?.trim().split(".").first();
+			lE.fileName = fileName;
 
 			let x = interval(RemindersDataService.getSettings().autoRefreshTime * 10000).subscribe(() => {
 				RemindersDataService.fetchData(spec, fileName).then(
-					([listData, reminders]) => {
+					([listData, reminders, customReminders]) => {
 						lE.reminders = reminders;
 						lE.listMeta = listData;
+						lE.customReminders = customReminders;
+						// console.log({ listData, reminders, customReminders });
+
 					}
 				)
 			});
@@ -72,10 +76,15 @@ export default class AppleRemindersPlugin extends Plugin {
 				sub: x
 			}
 
-			RemindersDataService.fetchData(spec, fileName).then(([listData, reminders]) => {
-				lE.listMeta = listData;
-				lE.reminders = reminders;
-			})
+			RemindersDataService.fetchData(spec, fileName).then(
+				([listData, reminders, customReminders]) => {
+					lE.reminders = reminders;
+					lE.listMeta = listData;
+					lE.customReminders = customReminders;
+					// console.log({ listData, reminders, customReminders });
+
+				}
+			)
 
 			el.appendChild(lE);
 		})

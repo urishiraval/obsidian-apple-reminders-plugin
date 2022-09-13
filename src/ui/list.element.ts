@@ -13,12 +13,15 @@ export class ListElement extends LitElement {
 	@property() refreshDisabled: boolean = false;
 
 	@property() reminders: ReminderModel[] = [];
+	@property() customReminders: ReminderModel[] = [];
 	@property() listMeta: ListModel;
+
+	@property() fileName: string | undefined;
 
 	private readonly loadingBar = new LoadingBarComponent();
 
 	get elements() {
-		return this.reminders.map((rem) => {
+		return this.reminders.concat(this.customReminders).map((rem) => {
 			let el = new ReminderElement();
 			el.model = rem;
 			el.list_name = this.listMeta.name;
@@ -45,11 +48,15 @@ export class ListElement extends LitElement {
 
 	refresh() {
 		this.refreshDisabled = true;
-		RemindersDataService.fetchData(this.spec).then(([listData, reminders]) => {
-			this.listMeta = listData;
-			this.reminders = reminders;
-			this.refreshDisabled = false;
-		})
+
+		RemindersDataService.fetchData(this.spec, this.fileName).then(
+			([listData, reminders, customReminders]) => {
+				this.reminders = reminders;
+				this.listMeta = listData;
+				this.customReminders = customReminders;
+				this.refreshDisabled = false;
+			}
+		)
 	}
 
 	render() {
@@ -58,17 +65,17 @@ export class ListElement extends LitElement {
 				<hr class="apple-list-top-rule" />
 				<h2>
 					<span
-						style="color: ${this.listMeta?.color}">${(!this.listMeta?.name)? this.spec?.list: this.listMeta.name}</span>
+						style="color: ${this.listMeta?.color}">${(!this.listMeta?.name) ? this.spec?.list : this.listMeta.name}</span>
 				</h2>
 
 				${(this.listMeta) ? html`
 					<span class="apple-list-reminders">
-						${(this.elements.length > 0)? this.elements: html`<small style="padding-bottom: 1rem;">No reminders found</small>`}
+						${(this.elements.length > 0) ? this.elements : html`<small style="padding-bottom: 1rem;">No reminders found</small>`}
 					</span>
 
 				`
-					: this.loadingBar
-				}
+				: this.loadingBar
+			}
 				<br />
 				<button @click="${this.refresh}" ?disabled="${this.refreshDisabled}">Refresh</button>
 				<hr class="apple-list-bottom-rule" />

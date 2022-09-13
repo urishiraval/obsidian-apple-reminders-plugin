@@ -1,0 +1,1 @@
+export const APPLE_DATE_FORMAT = "dddd, DD MMMM at H:m:ss";

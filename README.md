@@ -1,143 +1,73 @@
-# Apple Reminders
+# Obsidian Sample Plugin
 
-![Reminders Plugin used with daily notes](/docs/RemindersPlugin.gif)
+This is a sample plugin for Obsidian (https://obsidian.md).
 
-A plugin to attempt to bring Apple Reminders into [Obsidian](https://obsidian.md). 
+This project uses Typescript to provide type checking and documentation.
+The repo depends on the latest plugin API (obsidian.d.ts) in Typescript Definition format, which contains TSDoc comments describing what it does.
 
-Note: This plugin can get a bit heavy but I've tried to make it as effecient as possible. Any recommendations are welcome.
+**Note:** The Obsidian API is still in early alpha and is subject to change at any time!
 
-(I'm not responsible for any loss of data....though this plugin never deletes any reminder, only ever alters their properties)
+This sample plugin demonstrates some of the basic functionality the plugin API can do.
+- Changes the default font color to red using `styles.css`.
+- Adds a ribbon icon, which shows a Notice when clicked.
+- Adds a command "Open Sample Modal" which opens a Modal.
+- Adds a plugin setting tab to the settings page.
+- Registers a global click event and output 'click' to the console.
+- Registers a global interval which logs 'setInterval' to the console.
 
-##### Change Log
+## First time developing plugins?
 
-v0.2:
-- Implemented basic Filtering
-- Displayed more Data
-- UI Improvements
+Quick starting guide for new plugin devs:
 
-# Requirements
+- Check if [someone already developed a plugin for what you want](https://obsidian.md/plugins)! There might be an existing plugin similar enough that you can partner up with.
+- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
+- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
+- Install NodeJS, then run `npm i` in the command line under your repo folder.
+- Run `npm run dev` to compile your plugin from `main.ts` to `main.js`.
+- Make changes to `main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
+- Reload Obsidian to load the new version of your plugin.
+- Enable plugin in settings window.
+- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
 
-This plugin uses apple script to sync so it will only work on an Apple Device.
+## Releasing new releases
 
-# Installation Instructions
+- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
+- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
+- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
+- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments. Note: The manifest.json file must be in two places, first the root path of your repository and also in the release.
+- Publish the release.
 
-### Manual
+> You can simplify the version bump process by running `npm version patch`, `npm version minor` or `npm version major` after updating `minAppVersion` manually in `manifest.json`.
+> The command will bump version in `manifest.json` and `package.json`, and add the entry for the new version to `versions.json`
 
-1. Download and unzip the release folder `obsidian-apple-reminders-plugin.zip`
-2. Copy the `obsidian-apple-reminders-plugin` folder into the `.obsidian/plugins` folder
-3. Start Obsidian
-4. Enable `Apple Reminders` in `Third-Party Plugins`
+## Adding your plugin to the community plugin list
 
-### Obsidian Built-In Plugin Manager
+- Check https://github.com/obsidianmd/obsidian-releases/blob/master/plugin-review.md
+- Publish an initial version.
+- Make sure you have a `README.md` file in the root of your repo.
+- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
 
-> Comming Soon...
+## How to use
 
-# How To Use
+- Clone this repo.
+- `npm i` or `yarn` to install dependencies
+- `npm run dev` to start compilation in watch mode.
 
-Create a code block like so:
+## Manually installing the plugin
 
-```markdown
-'''reminders
-list: List Name
-'''
-```
+- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
 
-This will fetch all uncompleted reminders in the list `List Name`.
+## Improve code quality with eslint (optional)
+- [ESLint](https://eslint.org/) is a tool that analyzes your code to quickly find problems. You can run ESLint against your plugin to find common bugs and ways to improve your code. 
+- To use eslint with this project, make sure to install eslint from terminal:
+  - `npm install -g eslint`
+- To use eslint to analyze this project use this command:
+  - `eslint main.ts`
+  - eslint will then create a report with suggestions for code improvement by file and line number.
+- If your source code is in a folder, such as `src`, you can use eslint with this command to analyze all files in that folder:
+  - `eslint .\src\`
 
-Note:
-  - If the list does not exist, it will create it.
-  - This uses the [yaml](https://yaml.org) format specification.
-  - Nested (aka 'Indented') Reminders don't work. This is cause Apple doesn't expose this feature yet through apple script for some reason. (Bummer, I know.)
-  
-## Additional Features
 
-#### Pull Specific Reminders
+## API Documentation
 
-```yaml
-list: List Name
-reminders:
-  - Reminder 1
-  - Reminder 2
-```
-
-This will do 2 things:
- 1. Will Create 'Reminder 1' or 'Reminder 2' if it doesn't exist
- 2. If 'Reminder 1' or 'Reminder 2' does exist, it will fetch it and show it's status. 
-  - (I.e. it fetches the reminders regardless of whether they are completed, effectively bypassing the default settings of a list only fetching reminders that aren't completed yet.)
-
-#### Filters
-
-```yaml
-list: List Name
-reminders:
-  - Some Random (Possibly) Completed Reminder That Doesn't Matter
-filters:
-  - date: today - next month
-  - priority: high
-```
-
-So far only the ```date``` and ```priority``` fields are filterable since those are mostly what I pay attention to. (If you'd like other fields to be implemented please create an issue)
-
-Things to Note:
-1. The ```date``` field is parsed using the [Chrono.js](https://github.com/wanasit/chrono) library and thus has all the features (and or issues) that it has. Please refer to it's documentation to see what is available.
-  - However please note that the dates are compared using [Moment.js](https://momentjs.com/docs/#/query/is-same/) (specifically the isSame and isBetween (inclusive) functions) and the dates are limited to the 'day' value. This means that times are ignored.
-    - So for example, if you try to pull reminders ```between 6am and 5pm``` this will just pull all the reminders on that day rather than limit it to that time period
-2. The filters are 'anded' together. I.e. the filters in the example above become `date is between today and next month` **and** `priority is high`.
-3. The ```date``` field has a special keyword. If you put:
-
-```yaml
-- date: daily note
-```
-The filter will be replaced by the Title of the Note. This has a caveat that if your Daily Note has an unusual Date Format (that can not be parsed by Chrono.js) this filter will not work and this might result in no reminders being displayed. (If you use this feature and this caveat occurs, please create an issue or comment on an existing one).
-
-# Additional Notes
-
-The blocks sync every minute. The sync time is fixed at the moment but a Settings View is in the works (see Objectives below).
-
-# Objectives
-
-To add to this list create a Feature Request in Issues and I'll be happy to add it to this list.
-
-(In no particular order)
-
-- [x] Fetch data from Reminders.app for use in Obsidian
-  - [x] Figure out how to get data consistantly 
-    - using [AppleScript](https://developer.apple.com/library/archive/documentation/AppleScript/Conceptual/AppleScriptLangGuide/introduction/ASLR_intro.html), specifically using [this library](https://www.npmjs.com/package/node-osascript) to execute it for now, until and unless a more efficient way is found
-    
-- [ ] Display Data in Obsidian in a way that is most usable and uses Obsidian Constructs
-  - [x] Figure out how to best display Reminder data
-    - Using Svelte (like how the [obsidian-todoist-plugin](https://github.com/jamiebrynes7/obsidian-todoist-plugin) is doing it. Many Thanks!)
-  - [ ] Find a way to bring nested or 'indented' reminders into Obsidian (currently not supported in applescript)
-  - [ ] Make the Refresh Button work better (currently only refreshes the UI but not the Model, i.e. it doesn't pull from Apple)
-  - [ ] Filtering
-    - [x] Customize what a List Fetches
-    - [x] Filter by Date
-    - [ ] ~~Filter by Time~~
-      - This doesn't seem nessesary at the moment. However the status may change if enough people want the more fine grained control :)
-    - [x] Filter by Priority
-    - [ ] Filter by Location
-  - [ ] Create Status Bar icon and messages to show when the plugin is doing whatever it's doing.
-  - [ ] Create an Interface that shows all the Lists in Obsidian at once
-  - [ ] Create a 'Today' List (?? Is this redundant now that Filters are implemented?) 
-  
-- [ ] Create a mechanism that allows for efficient editing of Reminders via Obsidian
-  - [x] Create Reminders through Obsidian
-  - [x] Mark Reminders as completed through Obsidian
-  - [ ] Due Date and Remind Me Date editing of reminders
-  - [ ] List Color editing
-  - [ ] Look into bringing the List 'emblems' into Obsidian
-  
-- [ ] Make this plugin as configurable as possible to allow for multiple use cases
-  - [ ] Create a settings tab in the Obsidian Menu
-  - [ ] Make sync time configurable
-  - [ ] Make UI more configurable (standardize class names and create a document for it)
-  - [ ] Make sensible defaults
-    
-- [ ] Development Things
-  - [ ] Create Documentation
-  - [ ] Create Files for AppleScripts to allow for customization
-
-# Feedback
-
-Any bugs or features/recommendations can be made by creating an Issue on this repo
-
+See https://github.com/obsidianmd/obsidian-api

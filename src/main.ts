@@ -2,9 +2,10 @@ import { Plugin } from 'obsidian';
 import { ListElement } from './ui/list.element';
 import { RemindersDataService } from "./reminders-data.service";
 import { parse } from 'yaml';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, interval, Subscription } from 'rxjs';
 import { AppleReminderSpec } from './models/shared.models';
 import { AppleRemindersPluginSettings, SampleSettingTab, DEFAULT_SETTINGS } from './settings';
+import { threadId } from 'worker_threads';
 
 
 
@@ -12,19 +13,21 @@ export default class AppleRemindersPlugin extends Plugin {
 	settings: AppleRemindersPluginSettings;
 
 	blocks: BehaviorSubject<AppleReminderSpec>[] = [];
+	subs: Subscription[] = [];
 
 	statusBar: HTMLElement;
 
-    message(msg: string, disappearIn?: number) {
-        if (disappearIn) {
-            this.statusBar.setText(msg)
-            setTimeout(() => {
-                this.statusBar.setText("🍎")
-            }, disappearIn);
-        }
-        else
-            this.statusBar.setText(msg)
-    }
+	message(msg: string, disappearIn?: number) {
+		if (disappearIn) {
+			this.statusBar.setText(msg)
+			setTimeout(() => {
+				this.statusBar.setText("🍎")
+			}, disappearIn);
+		}
+		else
+			this.statusBar.setText(msg)
+	}
+
 
 	async onload() {
 		await this.loadSettings();
@@ -47,18 +50,32 @@ export default class AppleRemindersPlugin extends Plugin {
 
 		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
 
-		RemindersDataService.setLogger((x, timeout?:number) => this.message(x, timeout))
+		RemindersDataService.setLogger((x, timeout?: number) => this.message(x, timeout))
 		RemindersDataService.setSettings(this.settings);
 
 		this.registerMarkdownCodeBlockProcessor('apple-reminders', (src, el, ctx) => {
 			const spec = parse(src);
 			let lE = new ListElement(spec);
-			this.blocks.push(lE.spec);
+
+			RemindersDataService.fetchData(spec).then(([listData, reminders]) => {
+				lE.listMeta =  listData;
+				lE.reminders = reminders;
+			})
+
+			let x = interval(RemindersDataService.getSettings().autoRefreshTime * 1000).subscribe(() => { RemindersDataService.fetchData(spec).then(
+				([listData, reminders]) => {
+					lE.reminders = reminders;
+					lE.listMeta = listData;
+				}
+			) });
+
+			this.subs.push(x);
 			el.appendChild(lE);
 		})
 	}
 
 	onunload() {
+		this.subs.forEach(s => s.unsubscribe());
 
 	}
 

@@ -1,5 +1,5 @@
 import { executor } from './apple-integration';
-import { FilterModel, ListModel, ReminderModel } from './models/shared.models';
+import { AppleReminderSpec, FilterModel, ListModel, ReminderModel } from './models/shared.models';
 import { AppleRemindersPluginSettings, DEFAULT_SETTINGS } from './settings';
 
 
@@ -14,8 +14,8 @@ export const RemindersDataService = (function () {
     };
 
     const getList = async (list_name: ListModel["name"]): Promise<ListModel> => {
-        logger("Looking for "+list_name)
-        let ret = <ListModel> await executor(
+        logger("Looking for " + list_name)
+        let ret = <ListModel>await executor(
             `tell application "Reminders"
                         try
                             return properties of list list_name
@@ -32,7 +32,7 @@ export const RemindersDataService = (function () {
         return ret;
     };
     const getReminders = async (list_name: ListModel["name"], filters: FilterModel | undefined): Promise<ReminderModel[]> => {
-        logger("Getting reminders in "+list_name)
+        logger("Getting reminders in " + list_name)
         let x = await executor(
             `tell list list_name in application "Reminders"
                         set buffer to ((current date) - hours * 1)
@@ -42,11 +42,11 @@ export const RemindersDataService = (function () {
         );
         logger("Done", 2)
 
-        if(!Array.isArray(x)) return [];
-        return <ReminderModel[]> x;
+        if (!Array.isArray(x)) return [];
+        return <ReminderModel[]>x;
     };
     const getOrCreateReminder = async (list_name: ListModel["name"], reminder_name: ReminderModel["name"]) => {
-        logger("Looking for "+reminder_name+" in "+list_name+" before attempting to create")
+        logger("Looking for " + reminder_name + " in " + list_name + " before attempting to create")
         return await executor(`tell list list_name in application "Reminders"
                                     try
                                         return properties of reminder reminder_name
@@ -61,8 +61,8 @@ export const RemindersDataService = (function () {
     const refreshReminder = (reminderId: ReminderModel["id"]) => { };
     const toggleReminderDoneStatus = async (list_name: ListModel["name"], reminder_name: ReminderModel["name"]): Promise<ReminderModel> => {
 
-        logger("Reminder: "+reminder_name+" in list "+list_name+" toggled")
-        return <ReminderModel> await executor(`tell list list_name in application "Reminders"
+        logger("Reminder: " + reminder_name + " in list " + list_name + " toggled")
+        return <ReminderModel>await executor(`tell list list_name in application "Reminders"
                                     set rem to reminder reminder_name
                                     set completed in rem to not completed in rem
                                     return properties of rem
@@ -79,11 +79,23 @@ export const RemindersDataService = (function () {
         toggleReminderDoneStatus,
 
         setLogger: (func: (arg: any, clearAfter: number | undefined) => void) => {
-            logger = func;
+            logger = (x, clearAfter) => {
+                func(x, clearAfter);
+                console.log({ x, clearAfter })
+            };
         },
 
         setSettings: (_settings: AppleRemindersPluginSettings) => {
             settings = _settings;
+            console.log(settings);
+
+        },
+
+        fetchData: (spec: AppleReminderSpec) {
+            return Promise.all([
+                RemindersDataService.getList(spec.list),
+                RemindersDataService.getReminders(spec["list"], spec["filters"])
+            ])
         },
 
         getSettings: () => settings

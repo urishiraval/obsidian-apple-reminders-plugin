@@ -1,18 +1,15 @@
 import { LitElement, html, css, CSSResultGroup } from 'lit';
-import { customElement, property, state } from 'lit/decorators.js';
+import { customElement, property } from 'lit/decorators.js';
 import { AppleReminderSpec, ListModel, ReminderModel } from 'src/models/shared.models';
 import { ReminderElement } from './reminder.element';
-import { BehaviorSubject, interval } from 'rxjs';
-import * as moment from 'moment';
-import { RemindersDataService } from 'src/reminders-data.service';
 
 @customElement('apple-list-element')
 export class ListElement extends LitElement {
 
-	@property() spec: BehaviorSubject<AppleReminderSpec>;
+	@property() spec: AppleReminderSpec;
 
-	@state() reminders: ReminderModel[] = [];
-	@state() listMeta: ListModel;
+	@property() reminders: ReminderModel[] = [];
+	@property() listMeta: ListModel;
 
 	get elements() {
 		return this.reminders.map((rem) => {
@@ -24,23 +21,12 @@ export class ListElement extends LitElement {
 	}
 
 	fetchData(spec: AppleReminderSpec) {
-		Promise.all([
-			RemindersDataService.getList(spec.list),
-			RemindersDataService.getReminders(spec["list"], spec["filters"])
-		]).then(([listMeta, reminders]) => {
-			this.reminders = reminders;
-			this.listMeta = listMeta;
-		})
+
 	}
 
 	constructor(_spec: AppleReminderSpec) {
 		super();
-		this.spec = new BehaviorSubject(_spec);
-		this.spec.subscribe(spec => {
-			this.fetchData(spec);
-		})
-
-		interval(RemindersDataService.getSettings().autoRefreshTime*1000).subscribe(() => { this.fetchData(this.spec.value) });
+		this.spec = _spec;
 	}
 
 	static styles?: CSSResultGroup | undefined = css`
@@ -56,7 +42,7 @@ export class ListElement extends LitElement {
 	`;
 
 	refresh() {
-		this.fetchData(this.spec.value);
+		// this.fetchData(this.spec.value);
 	}
 
 	render() {

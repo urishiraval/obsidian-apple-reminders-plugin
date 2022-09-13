@@ -6,7 +6,7 @@ export interface AppleRemindersPluginSettings {
 }
 
 export const DEFAULT_SETTINGS: AppleRemindersPluginSettings = {
-	autoRefreshTime: 5
+	autoRefreshTime: 60
 }
 
 export class SampleSettingTab extends PluginSettingTab {
@@ -29,7 +29,7 @@ export class SampleSettingTab extends PluginSettingTab {
 			.setDesc('Please input time in seconds. This controls the interval between which the plugin automatically refreshes with Apple Reminders. (Restart Obsidian for changes to take affect)')
 			.setTooltip("300 seconds = 5 minutes")
 			.addSlider(text => text
-				.setLimits(5, 300, 5)
+				.setLimits(60, 600, 10)
 				.setValue(this.plugin.settings.autoRefreshTime)
 				.onChange(async (value) => {
 					console.log('Secret: ' + value);

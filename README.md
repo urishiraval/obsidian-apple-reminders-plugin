@@ -42,7 +42,7 @@ Add this plugin from the Community Plugins Tab
 Create a code block like so:
 
 ```markdown
-'''reminders
+'''apple-reminders
 list: List Name
 '''
 ```

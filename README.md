@@ -41,11 +41,11 @@ Add this plugin from the Community Plugins Tab
 
 Create a code block like so:
 
-```markdown
-'''apple-reminders
+````
+```apple-reminders
 list: List Name
-'''
 ```
+````
 
 This will fetch all uncompleted reminders in the list `List Name`.
 
